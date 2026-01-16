@@ -1,0 +1,33 @@
+# Dependencies
+node_modules/
+
+# Build outputs
+dist/
+dist-ssr/
+
+# Environment variables
+.env
+.env.local
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Uploads (no subir archivos de usuarios)
+uploads/responsivas/*
+uploads/reportes/*
+!uploads/responsivas/.gitkeep
+!uploads/reportes/.gitkeep
+
+# Database backups
+*.sql.bak

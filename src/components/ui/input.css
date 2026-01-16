@@ -1,0 +1,73 @@
+.input-wrapper {
+  position: relative;
+  --mouse-x: 50%;
+  --mouse-y: 50%;
+}
+
+.input-wrapper::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  border-radius: 6px;
+  opacity: 0;
+  background: radial-gradient(
+    600px circle at var(--mouse-x) var(--mouse-y),
+    rgba(243, 116, 47, 0.2),
+    transparent 40%
+  );
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.input-wrapper:hover::before {
+  opacity: 1;
+}
+
+.input-wrapper:has(.aceternity-input:focus)::before {
+  opacity: 1;
+  background: radial-gradient(
+    600px circle at var(--mouse-x) var(--mouse-y),
+    rgba(243, 116, 47, 0.3),
+    transparent 40%
+  );
+}
+
+.aceternity-input {
+  display: flex;
+  height: 40px;
+  width: 100%;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background-color: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  padding: 0.5rem 0.75rem;
+  font-size: 0.875rem;
+  color: #ffffff;
+  position: relative;
+  z-index: 1;
+  transition: all 0.2s;
+}
+
+.aceternity-input::placeholder {
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.aceternity-input:focus {
+  outline: none;
+  border-color: rgba(243, 116, 47, 0.6);
+  background-color: rgba(255, 255, 255, 0.15);
+  box-shadow: 
+    0 0 0 2px rgba(243, 116, 47, 0.2),
+    0px 2px 3px -1px rgba(0, 0, 0, 0.2),
+    0px 1px 0px 0px rgba(25, 28, 33, 0.02);
+}
+
+.aceternity-input:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+  background-color: rgba(255, 255, 255, 0.05);
+}
