@@ -31,3 +31,7 @@ uploads/reportes/*
 
 # Database backups
 *.sql.bak
+
+# Documentation screenshots (opcional - descomentar si no quieres subir las capturas)
+# docs/screenshots/*.png
+# docs/screenshots/*.jpg

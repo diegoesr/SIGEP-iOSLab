@@ -91,6 +91,38 @@ lab-ios/
 - ✅ Autenticación de administradores
 - ✅ Interfaz moderna y responsive
 
+## 📸 Capturas de Pantalla
+
+### Página de Login
+![Login](docs/screenshots/login.jpg)
+*Interfaz de inicio de sesión con diseño moderno y animación Dark Veil*
+
+### Dashboard Principal
+![Dashboard](docs/screenshots/dashboard.png)
+*Dashboard con estadísticas en tiempo real, gráficos y métricas del sistema*
+
+### Gestión de Inventario
+![Inventario](docs/screenshots/inventario.png)
+*Vista completa del inventario con búsqueda, filtros y acciones rápidas*
+
+### Sistema de Préstamos
+![Préstamos](docs/screenshots/prestamos.png)
+*Interfaz para gestionar préstamos y devoluciones de equipos*
+
+### Gestión de Usuarios
+![Usuarios](docs/screenshots/usuarios.png)
+*Registro y gestión de usuarios del sistema*
+
+### Reportes de Equipos
+![Reportes](docs/screenshots/reportes.png)
+*Sistema de reportes para equipos dañados, perdidos o fuera de uso*
+
+### Configuración y Administradores
+![Configuración](docs/screenshots/configuracion.png)
+*Panel de configuración y gestión de administradores*
+
+> **Nota**: Para agregar tus propias capturas de pantalla, colócalas en la carpeta `docs/screenshots/` y actualiza las rutas en esta sección.
+
 ## 📝 Notas de Desarrollo
 
 - El proyecto está configurado para desarrollo local con XAMPP
