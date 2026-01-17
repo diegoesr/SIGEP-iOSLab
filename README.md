@@ -106,19 +106,19 @@ lab-ios/
 *Vista completa del inventario con búsqueda, filtros y acciones rápidas*
 
 ### Sistema de Préstamos
-![Préstamos](docs/screenshots/prestamos.png)
+![Préstamos](docs/screenshots/prestamos.jpg)
 *Interfaz para gestionar préstamos y devoluciones de equipos*
 
 ### Gestión de Usuarios
-![Usuarios](docs/screenshots/usuarios.png)
+![Usuarios](docs/screenshots/usuarios.jpg)
 *Registro y gestión de usuarios del sistema*
 
 ### Reportes de Equipos
-![Reportes](docs/screenshots/reportes.png)
+![Reportes](docs/screenshots/reportes.jpg)
 *Sistema de reportes para equipos dañados, perdidos o fuera de uso*
 
 ### Configuración y Administradores
-![Configuración](docs/screenshots/configuracion.png)
+![Configuración](docs/screenshots/configuracion.jpg)
 *Panel de configuración y gestión de administradores*
 
 > **Nota**: Para agregar tus propias capturas de pantalla, colócalas en la carpeta `docs/screenshots/` y actualiza las rutas en esta sección.
