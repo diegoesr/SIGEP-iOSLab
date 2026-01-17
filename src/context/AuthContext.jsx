@@ -48,7 +48,19 @@ export const AuthProvider = ({ children }) => {
       }
     } catch (error) {
       console.error('Login error:', error);
-      return { success: false, message: error.message || 'Error de conexión' };
+      
+      // Mensajes más específicos según el tipo de error
+      let errorMessage = error.message || 'Error de conexión';
+      
+      if (error.message.includes('XAMPP') || error.message.includes('servidor')) {
+        errorMessage = error.message;
+      } else if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
+        errorMessage = 'No se puede conectar al servidor. Verifica que XAMPP (Apache y MySQL) estén corriendo.';
+      } else if (error.message.includes('Tiempo de espera')) {
+        errorMessage = error.message;
+      }
+      
+      return { success: false, message: errorMessage };
     }
   };
 

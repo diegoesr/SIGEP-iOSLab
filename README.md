@@ -98,11 +98,11 @@ lab-ios/
 *Interfaz de inicio de sesión con diseño moderno y animación Dark Veil*
 
 ### Dashboard Principal
-![Dashboard](docs/screenshots/dashboard.png)
+![Dashboard](docs/screenshots/dashboard.jpg)
 *Dashboard con estadísticas en tiempo real, gráficos y métricas del sistema*
 
 ### Gestión de Inventario
-![Inventario](docs/screenshots/inventario.png)
+![Inventario](docs/screenshots/inventario.jpg)
 *Vista completa del inventario con búsqueda, filtros y acciones rápidas*
 
 ### Sistema de Préstamos

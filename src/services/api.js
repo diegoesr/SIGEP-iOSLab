@@ -18,7 +18,16 @@ async function request(endpoint, options = {}) {
   try {
     const url = `${API_BASE_URL}${endpoint}`;
     
-    const response = await fetch(url, config);
+    // Agregar timeout de 10 segundos
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000);
+    
+    const response = await fetch(url, {
+      ...config,
+      signal: controller.signal
+    });
+    
+    clearTimeout(timeoutId);
     
     // Verificar si la respuesta es JSON
     let data;
@@ -55,6 +64,16 @@ async function request(endpoint, options = {}) {
       error: error.message,
       stack: error.stack
     });
+    
+    // Manejar errores de conexión específicos
+    if (error.name === 'AbortError') {
+      throw new Error('Tiempo de espera agotado. Verifica que XAMPP (Apache y MySQL) estén corriendo.');
+    }
+    
+    if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
+      throw new Error('No se puede conectar al servidor. Verifica que XAMPP (Apache y MySQL) estén corriendo.');
+    }
+    
     throw error;
   }
 }
