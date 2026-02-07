@@ -55,45 +55,6 @@ Sistema web Fullstack para la gestión de inventario y control de préstamos del
 
 **Vite Proxy Configuration**: Se configuró un proxy en `vite.config.js` que redirige todas las peticiones `/api` al backend PHP (`http://localhost/lab-ios/backend/api`), resolviendo problemas de CORS en desarrollo y permitiendo una comunicación transparente entre frontend y backend sin necesidad de configurar CORS complejo en Apache.
 
-### Gestión de Estado con React Context API
-
-**AuthContext para Autenticación Global**: Se implementó un contexto de autenticación (`AuthContext.jsx`) que:
-- **Persistencia de sesión**: Utiliza `localStorage` para mantener la sesión del usuario entre recargas de página
-- **Estado global reactivo**: Cualquier componente puede acceder al estado de autenticación mediante `useAuth()` hook
-- **Protección de rutas**: El componente `ProtectedRoute` verifica la autenticación antes de renderizar páginas protegidas, redirigiendo automáticamente al login si no hay sesión activa
-- **Manejo de errores mejorado**: Implementa detección específica de errores de red (servidor no disponible) con mensajes descriptivos para el usuario
-
-### Sistema de Autenticación con Tokens
-
-**Token-based Authentication**: Se implementó un sistema de autenticación basado en tokens:
-- **Generación de tokens**: El backend genera tokens codificados en Base64 con información del usuario y expiración (24 horas)
-- **Middleware de autenticación**: Cada endpoint protegido verifica el token mediante `verificarToken()` que:
-  - Extrae el token del header `Authorization: Bearer <token>` de múltiples formas (compatibilidad con diferentes servidores)
-  - Valida la expiración del token
-  - Retorna error 401 si el token es inválido o expirado
-- **Interceptores HTTP**: El servicio `api.js` intercepta automáticamente todas las peticiones para agregar el token en los headers y manejar respuestas 401 redirigiendo al login
-
-### Manejo de Errores y Timeouts
-
-**AbortController para Timeouts**: Se implementó un sistema de timeout de 10 segundos en todas las peticiones HTTP:
-- **Prevención de esperas infinitas**: Si el servidor no responde, se cancela la petición automáticamente
-- **Mensajes específicos**: Diferencia entre errores de red, timeout y errores del servidor, proporcionando mensajes útiles al usuario
-- **Detección de servidor**: Mensajes específicos cuando el servidor backend no está disponible, guiando al usuario a solucionar el problema
-
-**Validación de Respuestas**: El servicio API verifica el `Content-Type` de las respuestas antes de parsear JSON, evitando errores cuando el servidor retorna HTML de error en lugar de JSON.
-
-### Optimización de Rendimiento
-
-**Lazy Loading y Code Splitting**: React Router permite:
-- **Carga bajo demanda**: Cada ruta carga solo su componente cuando es necesario
-- **Reducción del bundle inicial**: El código se divide en chunks más pequeños, mejorando el tiempo de carga inicial
-
-**Consultas SQL Optimizadas**: 
-- **Índices en base de datos**: Las tablas principales tienen índices en columnas frecuentemente consultadas (`usuario_id`, `equipo_id`, `estado`)
-- **Agregación en servidor**: Los cálculos estadísticos se realizan en MySQL con `GROUP BY` y funciones de agregación, reduciendo el procesamiento en el cliente
-- **Filtrado en base de datos**: Las búsquedas y filtros se aplican directamente en las consultas SQL con `WHERE` y `LIKE`, evitando traer datos innecesarios
-
-
 ## 📋 Requisitos Previos
 
 - Docker Desktop instalado y ejecutándose
