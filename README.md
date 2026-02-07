@@ -73,35 +73,6 @@ Sistema web Fullstack para la gestión de inventario y control de préstamos del
   - Retorna error 401 si el token es inválido o expirado
 - **Interceptores HTTP**: El servicio `api.js` intercepta automáticamente todas las peticiones para agregar el token en los headers y manejar respuestas 401 redirigiendo al login
 
-### Conexión Segura a Base de Datos con PDO
-
-**Prepared Statements**: Se utiliza PDO (PHP Data Objects) con:
-- **Prevención de SQL Injection**: Todas las consultas utilizan prepared statements con parámetros nombrados (`:param`)
-- **Manejo de errores**: Configuración de `PDO::ATTR_ERRMODE` a `EXCEPTION` para capturar errores de base de datos
-- **Charset UTF-8**: Configuración explícita de `charset=utf8mb4` para soportar caracteres especiales y emojis
-- **Conexión singleton**: La clase `Database` implementa un patrón singleton que reutiliza conexiones existentes
-
-### Visualización de Datos con Chart.js
-
-**Gráficos Reactivos**: Se integró Chart.js con React mediante `react-chartjs-2`:
-- **Registro modular**: Solo se registran los componentes necesarios (`CategoryScale`, `LinearScale`, `BarElement`, etc.) para optimizar el bundle size
-- **Actualización automática**: Los gráficos se actualizan reactivamente cuando cambian los datos del estado de React
-- **Configuración personalizada**: Se implementaron opciones personalizadas para gráficos de barras horizontales con colores específicos del proyecto y tooltips informativos
-- **Datos agregados en backend**: Las consultas SQL utilizan `GROUP BY` y funciones de agregación (`COUNT`, `SUM`) para preparar los datos antes de enviarlos al frontend, reduciendo el procesamiento en el cliente
-
-### Desarrollo Rápido con Tailwind CSS
-
-**Utility-First CSS**: Tailwind CSS permite:
-- **Desarrollo ágil**: Creación de componentes complejos sin escribir CSS personalizado
-- **Consistencia visual**: Sistema de diseño predefinido (colores, espaciados, tipografías) garantiza consistencia en toda la aplicación
-- **Optimización de producción**: Tailwind purga automáticamente clases no utilizadas en producción, reduciendo el tamaño del CSS final
-- **Responsive design**: Utiliza breakpoints predefinidos (`sm:`, `md:`, `lg:`) para crear interfaces adaptativas con menos código
-
-**CSS Personalizado Complementario**: Se utiliza CSS3 tradicional para:
-- **Animaciones complejas**: Efectos como `Dark Veil` en el login con animaciones de gradientes y transiciones suaves
-- **Estilos específicos**: Tablas personalizadas, modales con backdrop blur, y efectos visuales únicos que requieren CSS avanzado
-- **Pseudo-elementos**: Implementación de switches personalizados y checkboxes con `::before` y `::after`
-
 ### Manejo de Errores y Timeouts
 
 **AbortController para Timeouts**: Se implementó un sistema de timeout de 10 segundos en todas las peticiones HTTP:
@@ -122,17 +93,6 @@ Sistema web Fullstack para la gestión de inventario y control de préstamos del
 - **Agregación en servidor**: Los cálculos estadísticos se realizan en MySQL con `GROUP BY` y funciones de agregación, reduciendo el procesamiento en el cliente
 - **Filtrado en base de datos**: Las búsquedas y filtros se aplican directamente en las consultas SQL con `WHERE` y `LIKE`, evitando traer datos innecesarios
 
-### Seguridad y CORS
-
-**Configuración de CORS**: Se implementó un middleware CORS (`backend/config/cors.php`) que:
-- **Control de origen**: Permite peticiones solo desde el origen del frontend
-- **Headers permitidos**: Define explícitamente qué headers pueden ser enviados (`Authorization`, `Content-Type`)
-- **Métodos HTTP**: Restringe los métodos permitidos (GET, POST, PUT, DELETE) según el endpoint
-
-**Sanitización de Inputs**: 
-- **Validación en backend**: Todos los inputs se validan en PHP antes de procesarse
-- **Prepared Statements**: Previene SQL injection
-- **Escape de HTML**: Los datos se escapan antes de mostrarse en la UI para prevenir XSS
 
 ## 📋 Requisitos Previos
 
@@ -185,31 +145,6 @@ docker exec -it labios_db mysql -u labios_user -plabios_password labios_db
 
 # Ver logs de un servicio específico
 docker-compose logs -f backend
-```
-
-Para más detalles sobre Docker, consulta la sección [🐳 Docker](#-docker) más abajo.
-
-### Opción 2: Desarrollo Local (Sin Docker)
-
-Si prefieres desarrollar sin Docker usando XAMPP:
-
-1. **Configurar Base de Datos**:
-   - Inicia XAMPP y asegúrate de que Apache y MySQL estén corriendo
-   - Crea la base de datos `labios_db` e importa `database/schema.sql`
-   - Puedes usar cualquier gestor de base de datos (DBeaver, MySQL Workbench, etc.) para gestionar la BD
-
-2. **Instalar Dependencias del Frontend**:
-```bash
-npm install
-```
-
-3. **Configurar Backend**:
-   - Asegúrate de que los directorios `uploads/responsivas` y `uploads/reportes` existan
-   - La configuración de base de datos en `backend/config/database.php` debe coincidir con tu entorno XAMPP (por defecto: usuario `root`, contraseña vacía)
-
-4. **Iniciar el Proyecto**:
-```bash
-npm run dev
 ```
 
 ## 🌐 Acceso
@@ -362,24 +297,6 @@ El `docker-compose.yml` incluye cuatro servicios:
      - Contraseña: `labios_password`
      - Base de datos: `labios_db`
 
-### Desarrollo con Hot-Reload
-
-Para desarrollo con hot-reload, puedes ejecutar el frontend localmente y usar Docker solo para backend y base de datos:
-
-1. **Iniciar solo backend y base de datos**:
-```bash
-cd docker
-docker-compose up -d db backend
-```
-
-2. **Ejecutar frontend localmente**:
-```bash
-npm install
-npm run dev
-```
-
-El frontend local se conectará automáticamente al backend en Docker a través del proxy configurado.
-
 ### Gestión de Base de Datos con Adminer
 
 Adminer es la interfaz gráfica incluida para gestionar la base de datos MySQL. Para acceder:
@@ -398,44 +315,6 @@ Adminer es la interfaz gráfica incluida para gestionar la base de datos MySQL. 
 - Una sola página PHP, más rápido
 - Integración perfecta con Docker
 - Permite ejecutar consultas SQL, gestionar tablas, importar/exportar datos
-
-### Solución de Problemas
-
-**Puerto ya en uso**: Si los puertos 3000, 8888, 3307 o 8082 están ocupados, modifica `docker/docker-compose.yml` y cambia los puertos en la sección `ports`:
-
-```yaml
-services:
-  frontend:
-    ports:
-      - "3001:80"  # Cambiar 3000 a 3001
-  backend:
-    ports:
-      - "8889:80"  # Cambiar 8888 a 8889
-  adminer:
-    ports:
-      - "8083:8080"  # Cambiar 8082 a 8083
-```
-
-**Error al construir**: Limpia el caché de Docker y reconstruye:
-```bash
-docker system prune -a
-cd docker
-docker-compose build --no-cache
-```
-
-**La base de datos no se inicializa**: Elimina el volumen y vuelve a crear:
-```bash
-cd docker
-docker-compose down -v
-docker-compose up -d
-```
-
-**No puedo acceder a Adminer**: Verifica que el contenedor esté corriendo:
-```bash
-cd docker
-docker-compose ps
-docker-compose logs adminer
-```
 
 ### Variables de Entorno
 
