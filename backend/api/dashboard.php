@@ -99,6 +99,7 @@ try {
         $total_reportes = 0;
     }
     
+    header('Content-Type: application/json; charset=utf-8');
     echo json_encode([
         'success' => true,
         'data' => [
@@ -111,7 +112,7 @@ try {
             'equipos_por_categoria' => $equipos_por_categoria,
             'total_reportes' => $total_reportes
         ]
-    ]);
+    ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
 } catch (PDOException $e) {
     http_response_code(500);
     echo json_encode([

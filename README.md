@@ -14,7 +14,7 @@ Sistema web Fullstack para la gestión de inventario y control de préstamos del
 - **React Router DOM 6.20.0** - Se implementó para crear una Single Page Application (SPA) con navegación fluida entre las diferentes secciones del sistema. Permite proteger rutas con autenticación (redirigir al login si no hay sesión activa) y mantener el estado de la aplicación durante la navegación.
 
 #### Build Tool y Desarrollo
-- **Vite 7.0.0** - Se eligió como herramienta de construcción por su velocidad en desarrollo y capacidad de configurar un proxy que redirige las peticiones `/api` al backend PHP en XAMPP (`http://localhost/lab-ios/backend/api`), permitiendo que el frontend React se comunique con el backend sin problemas de CORS.
+- **Vite 7.0.0** - Se eligió como herramienta de construcción por su velocidad en desarrollo y capacidad de configurar un proxy que redirige las peticiones `/api` al backend PHP. En Docker, el proxy se configura en Nginx, mientras que en desarrollo local puede configurarse para apuntar a XAMPP o al backend en Docker.
 
 #### Visualización de Datos
 - **Chart.js 4.5.1** - Se utilizó para crear los gráficos del Dashboard que muestran estadísticas visuales como "Equipos por Categoría" (gráfico de barras horizontal) y otros datos importantes del sistema, facilitando la comprensión rápida de la información.
@@ -34,52 +34,195 @@ Sistema web Fullstack para la gestión de inventario y control de préstamos del
 
 ### Backend
 
-- **PHP 8.x** - Se utilizó para crear la API REST que maneja todas las operaciones CRUD del sistema (inventario, préstamos, usuarios, reportes, administradores). Se eligió PHP por su integración nativa con XAMPP y facilidad para trabajar con MySQL/MariaDB, además de ser ideal para un entorno de desarrollo académico.
-- **MySQL/MariaDB** - Base de datos relacional utilizada para almacenar toda la información del sistema: equipos del inventario, préstamos activos e históricos, usuarios registrados, reportes de equipos, administradores y configuraciones. Se eligió por su compatibilidad con XAMPP y facilidad de uso en entornos educativos.
-- **Apache** - Servidor web HTTP proporcionado por XAMPP que sirve la aplicación PHP y maneja las peticiones del frontend React. Se utiliza porque viene integrado con XAMPP, facilitando la configuración del entorno de desarrollo local sin necesidad de configuraciones complejas.
+- **PHP 8.2** - Se utilizó para crear la API REST que maneja todas las operaciones CRUD del sistema (inventario, préstamos, usuarios, reportes, administradores). Se eligió PHP por su integración nativa con Apache y facilidad para trabajar con MySQL/MariaDB. En Docker, se ejecuta con PHP 8.2 y Apache, mientras que en desarrollo local puede usarse con XAMPP.
+- **MySQL 8.0** - Base de datos relacional utilizada para almacenar toda la información del sistema: equipos del inventario, préstamos activos e históricos, usuarios registrados, reportes de equipos, administradores y configuraciones. En Docker se ejecuta MySQL 8.0 con configuración UTF-8 (utf8mb4) para soportar caracteres especiales. También es compatible con XAMPP para desarrollo local.
+- **Apache** - Servidor web HTTP que sirve la aplicación PHP y maneja las peticiones del frontend React. En Docker se ejecuta Apache 2.4 con módulos de rewrite y headers habilitados. También puede usarse con XAMPP para desarrollo local.
+
+### Contenedorización
+
+- **Docker** - Se implementó Docker para facilitar el despliegue y desarrollo del proyecto. Permite ejecutar toda la aplicación (frontend, backend, base de datos y gestor de BD) en contenedores aislados, eliminando problemas de compatibilidad entre entornos y simplificando la configuración inicial. Todos los archivos de Docker están organizados en la carpeta `docker/` para mantener el proyecto limpio y organizado.
+- **Docker Compose** - Se utiliza para orquestar los múltiples servicios (MySQL 8.0, PHP 8.2/Apache, React/Nginx, Adminer) con un solo comando, gestionando automáticamente las redes, volúmenes y dependencias entre contenedores.
+- **Adminer** - Interfaz gráfica web moderna para gestionar la base de datos MySQL. Es más ligero y moderno que phpMyAdmin, con una interfaz limpia y responsiva. Se ejecuta como servicio adicional en Docker y permite gestionar la base de datos desde el navegador sin necesidad de herramientas externas.
+
+## 🔧 Implementación Técnica y Beneficios
+
+### Arquitectura Frontend-Backend Separada
+
+**React SPA con API REST**: Se implementó una arquitectura de cliente-servidor donde React maneja toda la lógica de presentación y PHP actúa como API RESTful. Esta separación permite:
+- **Escalabilidad**: El frontend puede ser desplegado en un CDN mientras el backend permanece en el servidor
+- **Mantenibilidad**: Cambios en la UI no afectan la lógica de negocio y viceversa
+- **Reutilización**: La API puede ser consumida por otras aplicaciones (móvil, desktop, etc.)
+
+**Vite Proxy Configuration**: Se configuró un proxy en `vite.config.js` que redirige todas las peticiones `/api` al backend PHP (`http://localhost/lab-ios/backend/api`), resolviendo problemas de CORS en desarrollo y permitiendo una comunicación transparente entre frontend y backend sin necesidad de configurar CORS complejo en Apache.
+
+### Gestión de Estado con React Context API
+
+**AuthContext para Autenticación Global**: Se implementó un contexto de autenticación (`AuthContext.jsx`) que:
+- **Persistencia de sesión**: Utiliza `localStorage` para mantener la sesión del usuario entre recargas de página
+- **Estado global reactivo**: Cualquier componente puede acceder al estado de autenticación mediante `useAuth()` hook
+- **Protección de rutas**: El componente `ProtectedRoute` verifica la autenticación antes de renderizar páginas protegidas, redirigiendo automáticamente al login si no hay sesión activa
+- **Manejo de errores mejorado**: Implementa detección específica de errores de red (servidor no disponible) con mensajes descriptivos para el usuario
+
+### Sistema de Autenticación con Tokens
+
+**Token-based Authentication**: Se implementó un sistema de autenticación basado en tokens:
+- **Generación de tokens**: El backend genera tokens codificados en Base64 con información del usuario y expiración (24 horas)
+- **Middleware de autenticación**: Cada endpoint protegido verifica el token mediante `verificarToken()` que:
+  - Extrae el token del header `Authorization: Bearer <token>` de múltiples formas (compatibilidad con diferentes servidores)
+  - Valida la expiración del token
+  - Retorna error 401 si el token es inválido o expirado
+- **Interceptores HTTP**: El servicio `api.js` intercepta automáticamente todas las peticiones para agregar el token en los headers y manejar respuestas 401 redirigiendo al login
+
+### Conexión Segura a Base de Datos con PDO
+
+**Prepared Statements**: Se utiliza PDO (PHP Data Objects) con:
+- **Prevención de SQL Injection**: Todas las consultas utilizan prepared statements con parámetros nombrados (`:param`)
+- **Manejo de errores**: Configuración de `PDO::ATTR_ERRMODE` a `EXCEPTION` para capturar errores de base de datos
+- **Charset UTF-8**: Configuración explícita de `charset=utf8mb4` para soportar caracteres especiales y emojis
+- **Conexión singleton**: La clase `Database` implementa un patrón singleton que reutiliza conexiones existentes
+
+### Visualización de Datos con Chart.js
+
+**Gráficos Reactivos**: Se integró Chart.js con React mediante `react-chartjs-2`:
+- **Registro modular**: Solo se registran los componentes necesarios (`CategoryScale`, `LinearScale`, `BarElement`, etc.) para optimizar el bundle size
+- **Actualización automática**: Los gráficos se actualizan reactivamente cuando cambian los datos del estado de React
+- **Configuración personalizada**: Se implementaron opciones personalizadas para gráficos de barras horizontales con colores específicos del proyecto y tooltips informativos
+- **Datos agregados en backend**: Las consultas SQL utilizan `GROUP BY` y funciones de agregación (`COUNT`, `SUM`) para preparar los datos antes de enviarlos al frontend, reduciendo el procesamiento en el cliente
+
+### Desarrollo Rápido con Tailwind CSS
+
+**Utility-First CSS**: Tailwind CSS permite:
+- **Desarrollo ágil**: Creación de componentes complejos sin escribir CSS personalizado
+- **Consistencia visual**: Sistema de diseño predefinido (colores, espaciados, tipografías) garantiza consistencia en toda la aplicación
+- **Optimización de producción**: Tailwind purga automáticamente clases no utilizadas en producción, reduciendo el tamaño del CSS final
+- **Responsive design**: Utiliza breakpoints predefinidos (`sm:`, `md:`, `lg:`) para crear interfaces adaptativas con menos código
+
+**CSS Personalizado Complementario**: Se utiliza CSS3 tradicional para:
+- **Animaciones complejas**: Efectos como `Dark Veil` en el login con animaciones de gradientes y transiciones suaves
+- **Estilos específicos**: Tablas personalizadas, modales con backdrop blur, y efectos visuales únicos que requieren CSS avanzado
+- **Pseudo-elementos**: Implementación de switches personalizados y checkboxes con `::before` y `::after`
+
+### Manejo de Errores y Timeouts
+
+**AbortController para Timeouts**: Se implementó un sistema de timeout de 10 segundos en todas las peticiones HTTP:
+- **Prevención de esperas infinitas**: Si el servidor no responde, se cancela la petición automáticamente
+- **Mensajes específicos**: Diferencia entre errores de red, timeout y errores del servidor, proporcionando mensajes útiles al usuario
+- **Detección de servidor**: Mensajes específicos cuando el servidor backend no está disponible, guiando al usuario a solucionar el problema
+
+**Validación de Respuestas**: El servicio API verifica el `Content-Type` de las respuestas antes de parsear JSON, evitando errores cuando el servidor retorna HTML de error en lugar de JSON.
+
+### Optimización de Rendimiento
+
+**Lazy Loading y Code Splitting**: React Router permite:
+- **Carga bajo demanda**: Cada ruta carga solo su componente cuando es necesario
+- **Reducción del bundle inicial**: El código se divide en chunks más pequeños, mejorando el tiempo de carga inicial
+
+**Consultas SQL Optimizadas**: 
+- **Índices en base de datos**: Las tablas principales tienen índices en columnas frecuentemente consultadas (`usuario_id`, `equipo_id`, `estado`)
+- **Agregación en servidor**: Los cálculos estadísticos se realizan en MySQL con `GROUP BY` y funciones de agregación, reduciendo el procesamiento en el cliente
+- **Filtrado en base de datos**: Las búsquedas y filtros se aplican directamente en las consultas SQL con `WHERE` y `LIKE`, evitando traer datos innecesarios
+
+### Seguridad y CORS
+
+**Configuración de CORS**: Se implementó un middleware CORS (`backend/config/cors.php`) que:
+- **Control de origen**: Permite peticiones solo desde el origen del frontend
+- **Headers permitidos**: Define explícitamente qué headers pueden ser enviados (`Authorization`, `Content-Type`)
+- **Métodos HTTP**: Restringe los métodos permitidos (GET, POST, PUT, DELETE) según el endpoint
+
+**Sanitización de Inputs**: 
+- **Validación en backend**: Todos los inputs se validan en PHP antes de procesarse
+- **Prepared Statements**: Previene SQL injection
+- **Escape de HTML**: Los datos se escapan antes de mostrarse en la UI para prevenir XSS
 
 ## 📋 Requisitos Previos
 
-- XAMPP instalado y configurado
-- Node.js 18+ y npm
+- Docker Desktop instalado y ejecutándose
+- Docker Compose v3.8 o superior
 - Navegador web moderno
 
-## 🛠️ Instalación
+## 🛠️ Instalación con Docker
 
-### 1. Configurar Base de Datos
+### Opción 1: Docker Compose (Recomendado)
 
-1. Inicia XAMPP y asegúrate de que Apache y MySQL estén corriendo
-2. Abre phpMyAdmin: `http://localhost/phpmyadmin`
-3. Importa el archivo `database/schema.sql` para crear la base de datos y tablas
+1. **Navegar a la carpeta docker**:
+```bash
+cd docker
+```
 
-### 2. Instalar Dependencias del Frontend
+2. **Construir y ejecutar los contenedores**:
+```bash
+docker-compose up -d --build
+```
 
+3. **Ver los logs** (opcional):
+```bash
+docker-compose logs -f
+```
+
+4. **Acceder a la aplicación**:
+   - **Frontend**: http://localhost:3000
+   - **Backend API**: http://localhost:8888/api
+
+La base de datos se inicializa automáticamente con el esquema y datos de ejemplo.
+
+### Comandos Docker Útiles
+
+```bash
+# Desde la carpeta docker/
+cd docker
+
+# Detener contenedores
+docker-compose down
+
+# Reiniciar un servicio
+docker-compose restart backend
+
+# Ver estado de contenedores
+docker-compose ps
+
+# Acceder a la base de datos
+docker exec -it labios_db mysql -u labios_user -plabios_password labios_db
+
+# Ver logs de un servicio específico
+docker-compose logs -f backend
+```
+
+Para más detalles sobre Docker, consulta la sección [🐳 Docker](#-docker) más abajo.
+
+### Opción 2: Desarrollo Local (Sin Docker)
+
+Si prefieres desarrollar sin Docker usando XAMPP:
+
+1. **Configurar Base de Datos**:
+   - Inicia XAMPP y asegúrate de que Apache y MySQL estén corriendo
+   - Crea la base de datos `labios_db` e importa `database/schema.sql`
+   - Puedes usar cualquier gestor de base de datos (DBeaver, MySQL Workbench, etc.) para gestionar la BD
+
+2. **Instalar Dependencias del Frontend**:
 ```bash
 npm install
 ```
 
-### 3. Configurar Backend
+3. **Configurar Backend**:
+   - Asegúrate de que los directorios `uploads/responsivas` y `uploads/reportes` existan
+   - La configuración de base de datos en `backend/config/database.php` debe coincidir con tu entorno XAMPP (por defecto: usuario `root`, contraseña vacía)
 
-El backend PHP ya está configurado en `backend/`. Asegúrate de que:
-- Los directorios `uploads/responsivas` y `uploads/reportes` existan
-- Los permisos de escritura estén habilitados en estos directorios
-- La configuración de base de datos en `backend/config/database.php` coincida con tu entorno XAMPP (por defecto: usuario `root`, contraseña vacía)
-
-### 4. Iniciar el Proyecto
-
+4. **Iniciar el Proyecto**:
 ```bash
-# Terminal 1: Frontend (React)
 npm run dev
-
-# Terminal 2: Asegúrate de que XAMPP esté corriendo
-# Apache y MySQL deben estar activos
 ```
 
 ## 🌐 Acceso
 
+### Con Docker:
+- **Frontend**: http://localhost:3000
+- **Backend API**: http://localhost:8888/api
+- **Base de datos**: localhost:3307 (usuario: `labios_user`, contraseña: `labios_password`)
+- **Adminer (Gestor BD)**: http://localhost:8082
+
+### Sin Docker:
 - **Frontend**: http://localhost:5173
 - **Backend API**: http://localhost/lab-ios/backend/api
-- **phpMyAdmin**: http://localhost/phpmyadmin
 
 ## 🔐 Credenciales por Defecto
 
@@ -96,6 +239,14 @@ lab-ios/
 │   ├── middleware/     # Autenticación
 │   └── utils/           # Utilidades
 ├── database/            # Scripts SQL
+├── docker/              # Configuración Docker
+│   ├── docker-compose.yml
+│   ├── frontend/
+│   │   ├── Dockerfile
+│   │   └── nginx.conf
+│   └── backend/
+│       ├── Dockerfile
+│       └── apache-config.conf
 ├── src/                 # Frontend React
 │   ├── components/      # Componentes reutilizables
 │   ├── pages/           # Páginas principales
@@ -143,6 +294,162 @@ lab-ios/
 ### Configuración y Administradores
 ![Configuración](docs/screenshots/configuracion.jpg)
 *Panel de configuración y gestión de administradores*
+
+## 🐳 Docker
+
+### Estructura de Archivos Docker
+
+Todos los archivos relacionados con Docker están organizados en la carpeta `docker/` para mantener el proyecto limpio y organizado:
+
+```
+docker/
+├── docker-compose.yml      # Orquestación de servicios
+├── README.md               # Guía rápida de Docker
+├── frontend/
+│   ├── Dockerfile          # Imagen del frontend React
+│   └── nginx.conf          # Configuración de Nginx
+└── backend/
+    ├── Dockerfile          # Imagen del backend PHP
+    └── apache-config.conf  # Configuración de Apache
+```
+
+### Uso Básico
+
+Para usar Docker, navega a la carpeta `docker/` y ejecuta:
+
+```bash
+cd docker
+
+# Construir y ejecutar todos los servicios
+docker-compose up -d --build
+
+# Ver logs
+docker-compose logs -f
+
+# Detener servicios
+docker-compose down
+```
+
+### Servicios Incluidos
+
+El `docker-compose.yml` incluye cuatro servicios:
+
+1. **db** (MySQL 8.0)
+   - Puerto: `3307` (mapeado desde el puerto interno 3306)
+   - Usuario: `labios_user`
+   - Contraseña: `labios_password`
+   - Base de datos: `labios_db`
+   - Los scripts SQL en `../database/` se ejecutan automáticamente al iniciar
+
+2. **backend** (PHP 8.2 + Apache)
+   - Puerto: `8888`
+   - Monta el directorio `../backend/` como volumen para desarrollo
+   - Monta `../uploads/` para persistir archivos subidos
+
+3. **frontend** (React + Nginx)
+   - Puerto: `3000`
+   - Servido con Nginx en modo producción
+   - Proxy configurado para `/api` → backend
+
+4. **adminer** (Interfaz gráfica MySQL)
+   - Puerto: `8082`
+   - Interfaz web moderna para gestionar la base de datos
+   - Acceso: http://localhost:8082
+   - Credenciales de conexión:
+     - Sistema: `MySQL`
+     - Servidor: `db`
+     - Usuario: `labios_user`
+     - Contraseña: `labios_password`
+     - Base de datos: `labios_db`
+
+### Desarrollo con Hot-Reload
+
+Para desarrollo con hot-reload, puedes ejecutar el frontend localmente y usar Docker solo para backend y base de datos:
+
+1. **Iniciar solo backend y base de datos**:
+```bash
+cd docker
+docker-compose up -d db backend
+```
+
+2. **Ejecutar frontend localmente**:
+```bash
+npm install
+npm run dev
+```
+
+El frontend local se conectará automáticamente al backend en Docker a través del proxy configurado.
+
+### Gestión de Base de Datos con Adminer
+
+Adminer es la interfaz gráfica incluida para gestionar la base de datos MySQL. Para acceder:
+
+1. **Abrir Adminer**: http://localhost:8082
+2. **Credenciales de conexión**:
+   - Sistema: `MySQL`
+   - Servidor: `db`
+   - Usuario: `labios_user`
+   - Contraseña: `labios_password`
+   - Base de datos: `labios_db`
+
+**Ventajas de Adminer**:
+- Interfaz moderna y responsiva
+- Más ligero que phpMyAdmin (~50MB vs ~500MB)
+- Una sola página PHP, más rápido
+- Integración perfecta con Docker
+- Permite ejecutar consultas SQL, gestionar tablas, importar/exportar datos
+
+### Solución de Problemas
+
+**Puerto ya en uso**: Si los puertos 3000, 8888, 3307 o 8082 están ocupados, modifica `docker/docker-compose.yml` y cambia los puertos en la sección `ports`:
+
+```yaml
+services:
+  frontend:
+    ports:
+      - "3001:80"  # Cambiar 3000 a 3001
+  backend:
+    ports:
+      - "8889:80"  # Cambiar 8888 a 8889
+  adminer:
+    ports:
+      - "8083:8080"  # Cambiar 8082 a 8083
+```
+
+**Error al construir**: Limpia el caché de Docker y reconstruye:
+```bash
+docker system prune -a
+cd docker
+docker-compose build --no-cache
+```
+
+**La base de datos no se inicializa**: Elimina el volumen y vuelve a crear:
+```bash
+cd docker
+docker-compose down -v
+docker-compose up -d
+```
+
+**No puedo acceder a Adminer**: Verifica que el contenedor esté corriendo:
+```bash
+cd docker
+docker-compose ps
+docker-compose logs adminer
+```
+
+### Variables de Entorno
+
+Las variables de entorno están configuradas en `docker/docker-compose.yml`:
+
+```yaml
+environment:
+  - DB_HOST=db
+  - DB_NAME=labios_db
+  - DB_USER=labios_user
+  - DB_PASSWORD=labios_password
+```
+
+Para cambiar estas variables, edita `docker/docker-compose.yml` y reinicia los servicios.
 
 ## 👥 Autores
 

@@ -39,10 +39,11 @@ switch ($method) {
             
             $usuarios = $stmt->fetchAll();
             
+            header('Content-Type: application/json; charset=utf-8');
             echo json_encode([
                 'success' => true,
                 'data' => $usuarios
-            ]);
+            ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
         } catch (PDOException $e) {
             http_response_code(500);
             echo json_encode([
@@ -54,23 +55,35 @@ switch ($method) {
     
     case 'POST':
         // Registrar nuevo usuario
-        $data = json_decode(file_get_contents('php://input'), true);
+        $raw_input = file_get_contents('php://input');
+        $data = json_decode($raw_input, true);
         
-        $nombre = $data['nombre'] ?? '';
-        $matricula = $data['matricula'] ?? '';
-        $email = $data['email'] ?? '';
-        $telefono = $data['telefono'] ?? '';
+        // Asegurar que los datos estén en UTF-8
+        $nombre = mb_convert_encoding($data['nombre'] ?? '', 'UTF-8', 'UTF-8');
+        $matricula = mb_convert_encoding($data['matricula'] ?? '', 'UTF-8', 'UTF-8');
+        $email = mb_convert_encoding($data['email'] ?? '', 'UTF-8', 'UTF-8');
+        $telefono = mb_convert_encoding($data['telefono'] ?? '', 'UTF-8', 'UTF-8');
+        
+        // Limpiar y normalizar
+        $nombre = trim($nombre);
+        $matricula = trim($matricula);
+        $email = trim($email);
+        $telefono = trim($telefono);
         
         if (empty($nombre) || empty($matricula)) {
             http_response_code(400);
+            header('Content-Type: application/json; charset=utf-8');
             echo json_encode([
                 'success' => false,
                 'message' => 'Nombre y matrícula son requeridos'
-            ]);
+            ], JSON_UNESCAPED_UNICODE);
             exit();
         }
         
         try {
+            // Asegurar que la conexión use UTF-8 antes de insertar
+            $conn->exec("SET NAMES 'utf8mb4' COLLATE 'utf8mb4_unicode_ci'");
+            
             $stmt = $conn->prepare("
                 INSERT INTO usuarios (nombre, matricula, email, telefono, created_at)
                 VALUES (?, ?, ?, ?, NOW())
@@ -79,53 +92,62 @@ switch ($method) {
             $stmt->execute([$nombre, $matricula, $email, $telefono]);
             $usuario_id = $conn->lastInsertId();
             
+            header('Content-Type: application/json; charset=utf-8');
             echo json_encode([
                 'success' => true,
                 'message' => 'Usuario registrado exitosamente',
                 'data' => ['id' => $usuario_id]
-            ]);
+            ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
         } catch (PDOException $e) {
             if ($e->getCode() == 23000) {
                 http_response_code(400);
+                header('Content-Type: application/json; charset=utf-8');
                 echo json_encode([
                     'success' => false,
                     'message' => 'La matrícula ya está registrada'
-                ]);
+                ], JSON_UNESCAPED_UNICODE);
             } else {
                 http_response_code(500);
+                header('Content-Type: application/json; charset=utf-8');
                 echo json_encode([
                     'success' => false,
                     'message' => 'Error al registrar usuario'
-                ]);
+                ], JSON_UNESCAPED_UNICODE);
             }
         }
         break;
     
     case 'PUT':
         // Actualizar usuario
-        $data = json_decode(file_get_contents('php://input'), true);
+        $raw_input = file_get_contents('php://input');
+        $data = json_decode($raw_input, true);
         $id = $data['id'] ?? null;
         
         if (!$id) {
             http_response_code(400);
+            header('Content-Type: application/json; charset=utf-8');
             echo json_encode([
                 'success' => false,
                 'message' => 'ID de usuario es requerido'
-            ]);
+            ], JSON_UNESCAPED_UNICODE);
             exit();
         }
         
         try {
+            // Asegurar que la conexión use UTF-8 antes de consultar/actualizar
+            $conn->exec("SET NAMES 'utf8mb4' COLLATE 'utf8mb4_unicode_ci'");
+            
             $stmt = $conn->prepare("SELECT id FROM usuarios WHERE id = ?");
             $stmt->execute([$id]);
             $usuario = $stmt->fetch(PDO::FETCH_ASSOC);
             
             if (!$usuario) {
                 http_response_code(404);
+                header('Content-Type: application/json; charset=utf-8');
                 echo json_encode([
                     'success' => false,
                     'message' => 'Usuario no encontrado'
-                ]);
+                ], JSON_UNESCAPED_UNICODE);
                 exit();
             }
             
@@ -133,26 +155,33 @@ switch ($method) {
             $params = [];
             
             if (isset($data['nombre'])) {
+                $nombre = mb_convert_encoding($data['nombre'], 'UTF-8', 'UTF-8');
+                $nombre = trim($nombre);
                 $updates[] = "nombre = ?";
-                $params[] = $data['nombre'];
+                $params[] = $nombre;
             }
             
             if (isset($data['email'])) {
+                $email = mb_convert_encoding($data['email'], 'UTF-8', 'UTF-8');
+                $email = trim($email);
                 $updates[] = "email = ?";
-                $params[] = $data['email'];
+                $params[] = $email;
             }
             
             if (isset($data['telefono'])) {
+                $telefono = mb_convert_encoding($data['telefono'], 'UTF-8', 'UTF-8');
+                $telefono = trim($telefono);
                 $updates[] = "telefono = ?";
-                $params[] = $data['telefono'];
+                $params[] = $telefono;
             }
             
             if (empty($updates)) {
                 http_response_code(400);
+                header('Content-Type: application/json; charset=utf-8');
                 echo json_encode([
                     'success' => false,
                     'message' => 'No hay campos para actualizar'
-                ]);
+                ], JSON_UNESCAPED_UNICODE);
                 exit();
             }
             
@@ -163,10 +192,11 @@ switch ($method) {
             $updateStmt = $conn->prepare($sql);
             $updateStmt->execute($params);
             
+            header('Content-Type: application/json; charset=utf-8');
             echo json_encode([
                 'success' => true,
                 'message' => 'Usuario actualizado exitosamente'
-            ]);
+            ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
         } catch (PDOException $e) {
             http_response_code(500);
             echo json_encode([

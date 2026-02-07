@@ -52,10 +52,11 @@ switch ($method) {
             
             $prestamos = $stmt->fetchAll();
             
+            header('Content-Type: application/json; charset=utf-8');
             echo json_encode([
                 'success' => true,
                 'data' => $prestamos
-            ]);
+            ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
         } catch (PDOException $e) {
             http_response_code(500);
             echo json_encode([

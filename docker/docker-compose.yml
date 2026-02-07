@@ -1,0 +1,84 @@
+services:
+  # Base de datos MySQL
+  db:
+    image: mysql:8.0
+    container_name: labios_db
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: labios_db
+      MYSQL_USER: labios_user
+      MYSQL_PASSWORD: labios_password
+    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci --default-authentication-plugin=mysql_native_password
+    ports:
+      - "3307:3306"
+    volumes:
+      - db_data:/var/lib/mysql
+      - ../database/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
+      - ../database/seed_inventario.sql:/docker-entrypoint-initdb.d/02-seed-inventario.sql:ro
+      - ../database/seed_prestamos.sql:/docker-entrypoint-initdb.d/03-seed-prestamos.sql:ro
+    networks:
+      - labios_network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-prootpassword"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Backend PHP/Apache
+  backend:
+    build:
+      context: ..
+      dockerfile: docker/backend/Dockerfile
+    container_name: labios_backend
+    restart: unless-stopped
+    ports:
+      - "8888:80"
+    volumes:
+      - ../backend:/var/www/html
+      - ../uploads:/var/www/html/uploads
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      - DB_HOST=db
+      - DB_NAME=labios_db
+      - DB_USER=labios_user
+      - DB_PASSWORD=labios_password
+    networks:
+      - labios_network
+
+  # Frontend React/Vite
+  frontend:
+    build:
+      context: ..
+      dockerfile: docker/frontend/Dockerfile
+    container_name: labios_frontend
+    restart: unless-stopped
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
+    networks:
+      - labios_network
+
+  # Adminer - Interfaz gráfica para MySQL
+  adminer:
+    image: adminer:latest
+    container_name: labios_adminer
+    restart: unless-stopped
+    ports:
+      - "8082:8080"
+    environment:
+      ADMINER_DEFAULT_SERVER: db
+    depends_on:
+      - db
+    networks:
+      - labios_network
+
+volumes:
+  db_data:
+
+networks:
+  labios_network:
+    driver: bridge

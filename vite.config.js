@@ -5,12 +5,13 @@ import react from '@vitejs/plugin-react'
 export default defineConfig({
   plugins: [react()],
   server: {
+    host: '0.0.0.0', // Permite acceso desde fuera del contenedor
     port: 5173,
     proxy: {
       '/api': {
-        target: 'http://localhost/lab-ios/backend/api',
+        target: process.env.VITE_API_URL || 'http://localhost:8888',
         changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/api/, ''),
+        rewrite: (path) => path.replace(/^\/api/, '/api'),
         configure: (proxy, _options) => {
           proxy.on('proxyReq', (proxyReq, req, _res) => {
             // Asegurar que los headers se pasen correctamente

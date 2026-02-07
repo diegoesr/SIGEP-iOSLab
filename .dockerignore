@@ -1,0 +1,15 @@
+node_modules
+npm-debug.log
+dist
+.git
+.gitignore
+README.md
+README-Docker.md
+.env
+.env.local
+.DS_Store
+*.log
+docker-compose.yml
+.docker
+docs
+EXPERIENCIA_PROFESIONAL.md
