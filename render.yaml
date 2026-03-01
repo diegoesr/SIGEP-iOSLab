@@ -45,3 +45,4 @@ databases:
     databaseName: labios_db
     user: labios_user
     plan: free
+    databaseType: mysql
