@@ -1,0 +1,48 @@
+services:
+  # Backend PHP/Apache
+  - type: web
+    name: labios-backend
+    runtime: docker
+    dockerfilePath: ./docker/backend/Dockerfile
+    dockerContext: .
+    plan: free
+    envVars:
+      - key: DB_HOST
+        fromDatabase:
+          name: labios-db
+          property: host
+      - key: DB_NAME
+        fromDatabase:
+          name: labios-db
+          property: database
+      - key: DB_USER
+        fromDatabase:
+          name: labios-db
+          property: user
+      - key: DB_PASSWORD
+        fromDatabase:
+          name: labios-db
+          property: password
+      - key: FRONTEND_URL
+        value: https://labios-frontend.onrender.com
+    healthCheckPath: /api/index.php
+
+  # Frontend React/Nginx
+  - type: web
+    name: labios-frontend
+    runtime: docker
+    dockerfilePath: ./docker/frontend/Dockerfile
+    dockerContext: .
+    plan: free
+    envVars:
+      - key: VITE_API_URL
+        sync: false
+        # Actualizar después del primer despliegue con la URL real del backend
+        # Ejemplo: https://labios-backend.onrender.com/api
+
+# Base de datos MySQL
+databases:
+  - name: labios-db
+    databaseName: labios_db
+    user: labios_user
+    plan: free
