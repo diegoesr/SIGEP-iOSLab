@@ -3,16 +3,24 @@ FROM node:20-alpine AS builder
 
 WORKDIR /app
 
-# Copiar archivos de dependencias
+# Copiar archivos de dependencias primero (para cache de Docker)
 COPY package*.json ./
 
 # Instalar dependencias
 RUN npm ci
 
-# Copiar código fuente
-COPY . .
+# Copiar solo los archivos necesarios para el frontend
+COPY index.html ./
+COPY vite.config.js ./
+COPY tailwind.config.js ./
+COPY postcss.config.js ./
+COPY eslint.config.js ./
+COPY src/ ./src/
+COPY public/ ./public/
 
 # Construir la aplicación
+# VITE_API_URL se pasa automáticamente desde las variables de entorno de Render
+# Vite solo expone variables que empiezan con VITE_ durante el build
 RUN npm run build
 
 # Imagen de producción con Nginx

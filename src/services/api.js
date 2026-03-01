@@ -1,4 +1,5 @@
-const API_BASE_URL = '/api';
+// Usar variable de entorno en producción, o '/api' relativo en desarrollo
+const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
 
 async function request(endpoint, options = {}) {
   const token = localStorage.getItem('token');
