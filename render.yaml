@@ -36,9 +36,8 @@ services:
     plan: free
     envVars:
       - key: VITE_API_URL
-        sync: false
-        # Actualizar después del primer despliegue con la URL real del backend
-        # Ejemplo: https://labios-backend.onrender.com/api
+        value: https://labios-backend.onrender.com/api
+        # Nota: Actualizar después del despliegue con la URL real del backend si es diferente
 
 # Base de datos MySQL
 databases:
